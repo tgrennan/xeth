@@ -193,7 +193,7 @@ int xeth_sbtx_fib6_nh_entry(struct net_device *mux, struct net *net,
 
 	if (f6i->nh->is_group) {
 		nhg = rcu_dereference_rtnl(f6i->nh->nh_grp);
-		if (nhg->mpath) {
+		if (nhg->is_multipath) {
 			if (nhg->num_nh > 0) {
 				nsiblings = nhg->num_nh - 1;
 				sz += nsiblings * sizeof(*sibling);
