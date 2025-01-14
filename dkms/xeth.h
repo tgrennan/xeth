@@ -23,6 +23,8 @@
 #include <net/ip6_fib.h>
 #include <net/netevent.h>
 #include <net/rtnetlink.h>
+#include <linux/etherdevice.h>
+#include <linux/if_vlan.h>
 
 #include <generated/uapi/linux/version.h>
 
