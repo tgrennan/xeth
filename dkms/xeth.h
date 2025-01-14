@@ -529,7 +529,7 @@ static inline bool xeth_mux_has__##name(volatile unsigned long *flags)	\
 {									\
 	bool flag;							\
 	smp_mb__before_atomic();					\
-	flag = variable_test_bit(xeth_mux_flag_##name, flags);		\
+	flag = arch_test_bit(xeth_mux_flag_##name, flags);		\
 	smp_mb__after_atomic();						\
 	return flag;							\
 }									\
