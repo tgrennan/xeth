@@ -15,7 +15,9 @@ static const char xeth_port_drvname[] = "xeth-port";
 static ssize_t xeth_port_subports(size_t port);
 
 struct xeth_port_ext {
+#if IS_ENABLED(CONFIG_I2C)
 	struct i2c_client *qsfp;
+#endif
 	u32 priv_flags;
 	atomic64_t stats[xeth_mux_max_stats];
 };
@@ -43,35 +45,43 @@ int xeth_port_subport(struct net_device *nd)
 
 static void xeth_port_uninit(struct net_device *nd)
 {
+#if IS_ENABLED(CONFIG_I2C)
 	struct xeth_port_priv *priv = netdev_priv(nd);
 	if (priv->subport <= 0 && priv->ext[0].qsfp) {
 		i2c_unregister_device(priv->ext[0].qsfp);
 		priv->ext[0].qsfp = NULL;
 	}
+#endif
 	xeth_proxy_uninit(nd);
 }
 
 static int xeth_port_open(struct net_device *nd)
 {
 	struct xeth_port_priv *priv = netdev_priv(nd);
-	struct gpio_desc *lpmode_gpio;
 
 	if (!(priv->proxy.mux->flags & IFF_UP))
 		dev_open(priv->proxy.mux, NULL);
-	lpmode_gpio = xeth_mux_qsfp_lpmode_gpio(priv->proxy.mux, priv->port);
-	if (lpmode_gpio)
-		gpiod_set_value_cansleep(lpmode_gpio, 0);
+#if IS_ENABLED(CONFIG_I2C)
+	{
+		struct gpio_desc *lpmode_gpio;
+		lpmode_gpio = xeth_mux_qsfp_lpmode_gpio(priv->proxy.mux,
+				priv->port);
+		if (lpmode_gpio)
+			gpiod_set_value_cansleep(lpmode_gpio, 0);
+	}
+#endif
 	return xeth_proxy_open(nd);
 }
 
 static int xeth_port_stop(struct net_device *nd)
 {
+#if IS_ENABLED(CONFIG_I2C)
 	struct xeth_port_priv *priv = netdev_priv(nd);
 	struct gpio_desc *lpmode_gpio;
-
 	lpmode_gpio = xeth_mux_qsfp_lpmode_gpio(priv->proxy.mux, priv->port);
 	if (lpmode_gpio)
 		gpiod_set_value_cansleep(lpmode_gpio, 1);
+#endif
 	return xeth_proxy_stop(nd);
 }
 
@@ -505,18 +515,26 @@ static int xeth_port_set_fecparam(struct net_device *nd,
 int xeth_port_get_module_info(struct net_device *nd,
 			      struct ethtool_modinfo *emi)
 {
+#if IS_ENABLED(CONFIG_I2C)
 	struct xeth_port_priv *priv = netdev_priv(nd);
 	return priv->ext[0].qsfp ?
 		xeth_qsfp_get_module_info(priv->ext[0].qsfp, emi) : -ENXIO;
+#else
+	return -ENXIO;
+#endif
 }
 
 int xeth_port_get_module_eeprom(struct net_device *nd,
 				struct ethtool_eeprom *ee, u8 *data)
 {
+#if IS_ENABLED(CONFIG_I2C)
 	struct xeth_port_priv *priv = netdev_priv(nd);
 	return priv->ext[0].qsfp ?
 		xeth_qsfp_get_module_eeprom(priv->ext[0].qsfp, ee, data) :
 		-ENXIO;
+#else
+	return -ENXIO;
+#endif
 }
 
 static const struct ethtool_ops xeth_port_eto = {
@@ -562,6 +580,7 @@ static void xeth_port_setup(struct net_device *nd)
 
 static void xeth_port_qsfp(struct xeth_port_priv *priv, u8 bus)
 {
+#if IS_ENABLED(CONFIG_I2C)
 	struct gpio_desc *absent_gpio =
 		xeth_mux_qsfp_absent_gpio(priv->proxy.mux, priv->port);
 	struct gpio_desc *reset_gpio =
@@ -576,6 +595,7 @@ static void xeth_port_qsfp(struct xeth_port_priv *priv, u8 bus)
 	priv->ext[0].qsfp = xeth_qsfp_client(bus, addrs);
 	if (!priv->ext[0].qsfp)
 		xeth_debug("qsfp[%d] not found @%d", priv->port, bus);
+#endif
 }
 
 static int xeth_port_validate(struct nlattr *tb[], struct nlattr *data[],
@@ -686,8 +706,12 @@ static u8 xeth_port_qs_prop(struct platform_device *pd, const char *label)
 
 static u8 xeth_port_qsfp_bus_prop(struct platform_device *pd)
 {
+#if IS_ENABLED(CONFIG_I2C)
 	u8 val;
 	return device_property_read_u8(&pd->dev, "qsfp-bus", &val) ?  0 : val;
+#else
+	return 0;
+#endif
 }
 
 static int xeth_port(struct platform_device *pd, struct net_device *mux,
