@@ -23,6 +23,7 @@ struct xeth_port_ext {
 struct xeth_port_priv {
 	struct xeth_proxy proxy;
 	int port, subport;
+	char dev_addr[ETH_ALEN];
 	struct ethtool_link_ksettings ksettings;
 	/* @ext: only included w/ subport[0] */
 	struct xeth_port_ext ext[];
@@ -719,7 +720,8 @@ static int xeth_port(struct platform_device *pd, struct net_device *mux,
 	nd->max_mtu = priv->proxy.mux->max_mtu;
 
 	if (!is_zero_ether_addr(addr)) {
-		ether_addr_copy(nd->dev_addr, addr);
+		ether_addr_copy(priv->dev_addr, addr);
+		nd->dev_addr = priv->dev_addr;
 		nd->addr_assign_type = NET_ADDR_PERM;
 	} else
 		eth_hw_addr_random(nd);
