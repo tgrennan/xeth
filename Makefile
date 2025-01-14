@@ -13,6 +13,10 @@ ifneq ($(KDIR),)
 	MAKEFLAGS += KDIR=$(KDIR)
 endif
 
+ifneq ($(MO),)
+	MAKEFLAGS += MO=$(MO)
+endif
+
 # subject, verb, object(s)
 svo = $(if $(Q),$(info $1 $3))$(Q)$2 $3
 
