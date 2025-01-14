@@ -158,7 +158,7 @@ int xeth_sbtx_fib_entry(struct net_device *mux, struct net *net,
 	msg->mask = inet_make_mask(feni->dst_len);
 	msg->event = (u8)event;
 	msg->nhs = nhs;
-	msg->tos = feni->tos;
+	msg->tos = feni->dscp;
 	msg->type = feni->type;
 	msg->table = feni->tb_id;
 	rcu_read_lock();
