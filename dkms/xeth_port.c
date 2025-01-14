@@ -674,7 +674,7 @@ static int xeth_port_index_prop(struct platform_device *pd)
 
 static void xeth_port_addr_prop(struct platform_device *pd, char *addr)
 {
-	if (!device_get_mac_address(&pd->dev, addr, ETH_ALEN))
+	if (!device_get_mac_address(&pd->dev, addr))
 		eth_zero_addr(addr);
 }
 
